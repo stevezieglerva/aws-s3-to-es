@@ -6,7 +6,8 @@ REM Replace spaces with underscores
 set timestamp=%timestamp: =_%
 
 
-copy /y test_s3.txt ".\ping_tests\%timestamp%.txt"
-call aws s3 sync  . s3://aws-s3-to-es/ --delete
+copy /y test_s3.txt ".\ping_tests\test_s3_%timestamp%.txt"
+copy /y test_s3_b.txt ".\ping_tests\test_s3_b_%timestamp%.txt"
+call aws s3 sync  . s3://aws-s3-to-es/ 
 
 

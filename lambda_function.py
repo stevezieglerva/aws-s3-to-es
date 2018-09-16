@@ -5,7 +5,7 @@ import time
 from ESLambdaLog import *
 from LocalTime import *
 from S3TextFromLambdaEvent import *
-
+import sys
 import os
 import traceback
 import logging
@@ -13,8 +13,9 @@ import structlog
 
 
 def lambda_handler(event, context):
-	log = structlog.get_logger()
-	log.info("started", lamda_event=event)
+	log = setup_logging()
+	log = log.bind(lambda_name="aws-s3-to-es")
+	log.critical("started", input_events=json.dumps(event, indent=3))
 
 	files_found = {}
 	s3 = boto3.resource('s3')
@@ -25,10 +26,11 @@ def lambda_handler(event, context):
 		return return_message
 
 	file_refs = get_files_from_s3_lambda_event(event)
+	log.critical("got_file_refs", file_refs=file_refs)
 	file_text = get_file_text_from_s3_file_urls(file_refs, s3)
 
 	return_message = get_return_message("Success", file_text)
-	log.info("finished", return_message=return_message)
+	log.critical("finished", return_message=json.dumps(return_message, indent=3))
 	return return_message
 
 
@@ -41,6 +43,29 @@ def get_return_message(msg, files_found):
 	return_message["files_found"] = files_found
 	return return_message
 	
-
+def setup_logging():
+    logging.basicConfig(
+        format="%(message)s",
+        stream=sys.stdout,
+        level=logging.INFO
+    )
+    structlog.configure(
+        processors=[
+            structlog.stdlib.filter_by_level,
+            structlog.stdlib.add_logger_name,
+            structlog.stdlib.add_log_level,
+            structlog.stdlib.PositionalArgumentsFormatter(),
+            structlog.processors.TimeStamper(fmt="iso"),
+            structlog.processors.StackInfoRenderer(),
+            structlog.processors.format_exc_info,
+            structlog.processors.UnicodeDecoder(),
+            structlog.processors.JSONRenderer()
+        ],
+        context_class=dict,
+        logger_factory=structlog.stdlib.LoggerFactory(),
+        wrapper_class=structlog.stdlib.BoundLogger,
+        cache_logger_on_first_use=True,
+    )
+    return structlog.get_logger()
 
 

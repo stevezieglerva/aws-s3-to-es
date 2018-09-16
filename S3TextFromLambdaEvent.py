@@ -1,9 +1,9 @@
-##class S3TextFromLambdaEvent:
-##	def __init__(self, lambda_event):
-##		if lambda_event == {}:
-##			raise ValueError("lambda_event is empty.")
-##
-##
+
+import sys
+import os
+import traceback
+import logging
+import structlog
 
 
 def get_files_from_s3_lambda_event(event):
