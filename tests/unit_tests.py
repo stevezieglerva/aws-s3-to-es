@@ -20,7 +20,7 @@ class TestMethods(unittest.TestCase):
 		result = lambda_handler({"hello" : "world"}, "testing")
 
 		# Assert
-		self.assertEqual(result, "Error: No key 'Records' in the event")
+		self.assertEqual(result["msg"], "Error: No key 'Records' in the event")
 
 
 
