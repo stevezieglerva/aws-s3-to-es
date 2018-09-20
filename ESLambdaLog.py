@@ -6,6 +6,7 @@ from aws_requests_auth.aws_auth import AWSRequestsAuth
 from elasticsearch import Elasticsearch, RequestsHttpConnection
 from aws_requests_auth.boto_utils import BotoAWSRequestsAuth
 from LocalTime import *
+import structlog
 
 class ESLambdaLog:
 	def __init__(self, index_name = "aws_lambda_start"):
@@ -37,13 +38,14 @@ class ESLambdaLog:
 
 	def get_timestamp(self):
 		local_time = LocalTime()
-		return local_time.local.strftime("%Y-%m-%dT%H:%M:%S.%f")
+		return local_time.utc.strftime("%Y-%m-%dT%H:%M:%S.%f")
 
 	def get_index_name_timestamp_label(self):	
 		local_time = LocalTime()
-		return local_time.local.strftime("%Y.%m.%d")
+		return local_time.utc.strftime("%Y.%m.%d")
 
 	def log_event(self, event):
+		local_time = LocalTime()
 		event["@timestamp"] = self.get_timestamp()
 		self.es.index(index=self.index_name, doc_type = "doc", body = event)
 

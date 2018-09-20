@@ -13,7 +13,10 @@ import structlog
 
 
 def lambda_handler(event, context):
-	log = setup_logging()
+	if "text_logging" in os.environ:
+		log = structlog.get_logger()
+	else:
+		log = setup_logging()
 	log = log.bind(lambda_name="aws-s3-to-es")
 	log.critical("started", input_events=json.dumps(event, indent=3))
 
@@ -28,6 +31,13 @@ def lambda_handler(event, context):
 	file_refs = get_files_from_s3_lambda_event(event)
 	log.critical("got_file_refs", file_refs=file_refs)
 	file_text = get_file_text_from_s3_file_urls(file_refs, s3)
+
+	es = ESLambdaLog("ping_checks")
+	for file in file_text:
+		text = file_text[file]
+		log.critical("prepping_to_index_in_ES", file=file, text=text)
+		text_json = json.loads(text)
+		es.log_event(text_json)
 
 	return_message = get_return_message("Success", file_text)
 	log.critical("finished", return_message=json.dumps(return_message, indent=3))

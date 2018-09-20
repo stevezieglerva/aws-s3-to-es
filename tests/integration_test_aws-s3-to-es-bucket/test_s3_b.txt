@@ -1,1 +1,1 @@
-{"ip" : "6.7.8.9"}
+{"local_time" : "Wed 09/19/2018 13:52:50.55", "beat_work_location" : "integration test 2!", "beat_ustif_vpn" : "ustif_vpn_on"  } 
