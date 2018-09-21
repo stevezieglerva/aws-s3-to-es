@@ -51,7 +51,7 @@ class TestMethods(unittest.TestCase):
 		s3 = boto3.resource('s3')
 		bucket = "aws-s3-to-es"
 		key = "integration_test_2.txt"
-		file_text = "{\"ip\" : \"9.9.9.9\"}"
+		file_text = "{\"ip\" : \"9.9.9.1\", \"line\" : 1}\n{\"ip\" : \"9.9.9.2\", \"line\" : 2}"
 		file_text_binary = bytes(file_text, 'utf-8')
 		object = s3.Object(bucket, key)
 		object.put(Body=file_text_binary)

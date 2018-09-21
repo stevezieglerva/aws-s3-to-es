@@ -35,9 +35,10 @@ def lambda_handler(event, context):
 	es = ESLambdaLog("ping_checks")
 	for file in file_text:
 		text = file_text[file]
-		log.critical("prepping_to_index_in_ES", file=file, text=text)
-		text_json = json.loads(text)
-		es.log_event(text_json)
+		for document_line in text.splitlines():
+			log.critical("prepping_to_index_in_ES", file=file, text=document_line)
+			text_json = json.loads(document_line)
+			es.log_event(text_json)
 
 	return_message = get_return_message("Success", file_text)
 	log.critical("finished", return_message=json.dumps(return_message, indent=3))
