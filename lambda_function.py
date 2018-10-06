@@ -10,6 +10,7 @@ import os
 import traceback
 import logging
 import structlog
+from urllib.parse import urlparse
 
 
 def lambda_handler(event, context):
@@ -32,11 +33,13 @@ def lambda_handler(event, context):
 	log.critical("got_file_refs", file_refs=file_refs)
 	file_text = get_file_text_from_s3_file_urls(file_refs, s3)
 
-	es = ESLambdaLog("ping_checks")
 	for file in file_text:
+		get_index_from_path(file)
 		text = file_text[file]
+		index_name_from_s3_path = get_index_from_path(file)
+		es = ESLambdaLog(index_name_from_s3_path)
 		for document_line in text.splitlines():
-			log.critical("prepping_to_index_in_ES", file=file, text=document_line)
+			log.critical("prepping_to_index_in_ES", file=file, text=document_line, index=index_name_from_s3_path)
 			text_json = json.loads(document_line)
 			es.log_event(text_json)
 
@@ -46,7 +49,25 @@ def lambda_handler(event, context):
 
 
 def get_index_from_path(path):
-	return ""
+	#https://s3.amazonaws.com/aws-s3-to-es/index_name_dir/test.txt
+	urlparts = urlparse(path)
+	if urlparts.netloc != "s3.amazonaws.com":
+		raise ValueError("Expected netloc of '" + path + "' to be 's3.amazonaws.com'") 
+	urlpath = urlparts.path
+	log = structlog.get_logger()
+	log.info("get_index_from_path", path=urlpath)
+	path_parts = urlpath.split("/")
+	if len(path_parts) < 2:
+		raise ValueError("Expected '" + path + "' to have at least two items in the path") 
+	if path_parts[1] != "aws-s3-to-es":
+		raise ValueError("Expected '" + path + "' to use the aws-s3-to-es bucket.") 
+	index_name = ""
+	if len(path_parts) == 3:
+		index_name = "general"
+	if len(path_parts) == 4:
+		index_name = path_parts[2]
+	return index_name
+
 
 def get_return_message(msg, files_found):
 	return_message = {}
