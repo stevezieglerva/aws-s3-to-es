@@ -30,7 +30,6 @@ def lambda_handler(event, context):
 		return return_message
 
 	file_refs = get_files_from_s3_lambda_event(event)
-	log.critical("got_file_refs", file_refs=file_refs)
 	file_text = get_file_text_from_s3_file_urls(file_refs, s3)
 
 	for file in file_text:
